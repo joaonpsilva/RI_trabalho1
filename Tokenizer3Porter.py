@@ -1,10 +1,11 @@
-import Stemmer
+from nltk.stem import PorterStemmer
+from nltk.tokenize import sent_tokenize, word_tokenize
 
 
-class Tokenizer2:
+class Tokenizer3Porter:
 
     def __init__(self, stopwordsfile):
-        self.stemmer = Stemmer.Stemmer("english")
+        self.stemmer = PorterStemmer()
         self.stopwords = self.buildStopWords(stopwordsfile)
 
     def buildStopWords(self, file):
@@ -15,7 +16,9 @@ class Tokenizer2:
         return [word for word in words if not word in self.stopwords]
 
     def process(self, words):
-        words = self.stemmer.stemWords(words)
+        words2 = []
         words = self.removeStopWords(words)
+        for word in words:
+            words2.append(self.stemmer.stem(word))
 
-        return words
+        return words2
