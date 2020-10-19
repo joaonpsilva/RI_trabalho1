@@ -16,9 +16,7 @@ class Tokenizer3Porter:
         return [word for word in words if not word in self.stopwords]
 
     def process(self, words):
-        words2 = []
         words = self.removeStopWords(words)
-        for word in words:
-            words2.append(self.stemmer.stem(word))
+        words = [self.stemmer.stem(word) for word in words]
 
-        return words2
+        return words
