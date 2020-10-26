@@ -1,87 +1,95 @@
 from Corpus import CorpusReader
 from Tokenizer1 import Tokenizer1
 from Tokenizer2 import Tokenizer2
-from Tokenizer3Porter import Tokenizer3Porter
+from Posting import Posting
 import time
 import sys
 import heapq
-
-# ver quanta memoria o programa gasta
+import argparse
 import os
 import psutil
 
 process = psutil.Process(os.getpid())
 
-corpusreader = CorpusReader('all_sources_metadata_2020-03-13.csv')
-tokenizer1 = Tokenizer1()
-# tokenizer2 = Tokenizer2('snowball_stopwords_EN.txt')           # Escolher o tokenizer
-tokenizer2 = Tokenizer3Porter('snowball_stopwords_EN.txt')
-idMap = {}
-invertedIndex = {}
-docID = 1
-
-t1 = time.time()
-while corpusreader.hasNext():
-    hashid, title, abstract = corpusreader.nextDocument()
-
-    idMap[docID] = hashid
-
-    words = tokenizer1.process(title, abstract)
-    words = tokenizer2.process(words)
-
-    for word in words:
-        if word not in invertedIndex:
-            invertedIndex[word] = [1, docID]
-        else:
-            if docID != invertedIndex[word][-1]:
-                invertedIndex[word].append(docID)
-            invertedIndex[word][0] += 1
-
-    docID += 1
-
-print(time.time() - t1, ' seconds')
-print(sys.getsizeof(invertedIndex), ' bytes')
-
-keyList = list(invertedIndex.keys())
-print('Vocabulary size: ', len(keyList))
-
-sortedkeyList = sorted(keyList)
-first10 = []
-c = 0
-for word in sortedkeyList:
-    if invertedIndex[word][0] == 1:
-        first10.append(word)
-        c += 1
-        if c == 10:
-            break
-print("First 10 terms with 1 doc freq: ", first10)
-
-mostUsed = heapq.nlargest(10, invertedIndex.items(), key=lambda item: item[1][0])
-print("Higher doc freq: ", [(i[0], i[1][0]) for i in mostUsed])
-
-print("Total memory used by programm: ", process.memory_info().rss, " bytes")
-
-# Using tuple (little less eficient but + understandable)
-'''
-t1 = time.time()
-while corpusreader.hasNext():
-    hashid, title, abstract = corpusreader.nextDocument()
-
-    idMap[docID] = hashid
-
-    words = tokenizer1.process(title, abstract)
-    words = tokenizer2.process(words)
-
-    for word in words:
-        if word not in invertedIndex:
-            invertedIndex[word] = (1,[docID])
-        else:
-            if docID != invertedIndex[word][1][-1]:
-                temp = invertedIndex[word][1]
-                temp.append(docID)
-                invertedIndex[word] = (invertedIndex[word][0]+1, temp) 
+class Indexer():
+    def __init__(self, corpus, tokenizer):
+        self.corpusreader = corpus
+        self.tokenizer = tokenizer
+        self.idMap = {}
+        self.invertedIndex = {}
+        self.docID = 1
     
-    docID+=1
+    def hasEnoughMemory(self):
+        return True
 
-print(time.time()-t1)
-'''
+    def index(self):
+
+        while self.hasEnoughMemory():
+
+            data = self.corpusreader.getNextChunk()
+            if data is None:
+                print("Finished")
+                return
+
+            for document in data:   #Iterate over Chunk of documents
+                doi, title, abstract = document[0], document[1], document[2]
+                self.idMap[self.docID] = doi
+
+                tokens = self.tokenizer.process(title, abstract)
+
+
+                for word in tokens:  #Iterate over token of documents
+
+                    if word not in self.invertedIndex:
+                        self.invertedIndex[word] = [Posting(self.docID)]
+                    else:
+                        if self.docID != self.invertedIndex[word][-1].documentId:
+                            self.invertedIndex[word].append(Posting(self.docID))
+                
+                self.docID+=1
+
+
+if __name__ == "__main__":
+
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-tokenizer", type=int, choices=[1,2], required=True, help="tokenizer")
+    parser.add_argument("-f", type=str, default="all_sources_metadata_2020-03-13.csv", help="text")
+    parser.add_argument("-user", type=bool , default=False , help="Opção de menu de pesquisa de termos")
+    args = parser.parse_args()
+
+    corpusreader = CorpusReader(args.f)
+    if args.tokenizer == 1:
+        tokenizer = Tokenizer1()
+    else:
+        tokenizer = Tokenizer2('snowball_stopwords_EN.txt')
+
+    indexer = Indexer(corpusreader, tokenizer)
+    
+    t1 = time.time()
+    indexer.index()
+    t2 = time.time()
+
+    print('seconds: ', t2-t1)
+    print('Indexer memory               : ', sys.getsizeof(indexer.invertedIndex))
+    print("Total memory used by programm: ", process.memory_info().rss)
+    
+    keyList = list(indexer.invertedIndex.keys())
+    print('Vocabulary size: ', len(keyList))
+
+    lessUsed = heapq.nsmallest(10, indexer.invertedIndex.items(), key=lambda item: (item[0], len(item[1])))
+    print("First 10 terms with 1 doc freq: ", [i[0] for i in lessUsed])
+    
+    mostUsed = heapq.nlargest(10, indexer.invertedIndex.items(), key=lambda item: len(item[1]))
+    print("Higher doc freq: ", [(i[0], len(i[1])) for i in mostUsed])
+
+    if args.user:
+        while True:
+            termo = input("Introduza o termo a pesquisar: ")
+            start_time = time.time()
+            termo = termo.lower()
+            if termo in indexer.invertedIndex.keys():
+                print(indexer.invertedIndex[termo])
+            else:
+                print("Termo não existente")
+                print("Keys parecidas: " , [key for key in indexer.invertedIndex.keys() if termo in key and len(termo) > 0])
+            print("---Pesquisa feita em %s seconds ---" % (time.time() - start_time))
