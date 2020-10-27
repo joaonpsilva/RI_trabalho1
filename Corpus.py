@@ -1,6 +1,7 @@
 import csv
 import pandas as pd
 
+
 class CorpusReader():
 
     def __init__(self, csvfile, chunkSize=100):

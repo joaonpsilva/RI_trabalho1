@@ -53,6 +53,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("-tokenizer", type=int, choices=[1,2], required=True, help="tokenizer")
     parser.add_argument("-f", type=str, default="all_sources_metadata_2020-03-13.csv", help="text")
+    parser.add_argument("-user", type=bool , default=False , help="Opção de menu de pesquisa de termos")
     args = parser.parse_args()
 
     corpusreader = CorpusReader(args.f)
@@ -79,3 +80,15 @@ if __name__ == "__main__":
     
     mostUsed = heapq.nlargest(10, indexer.invertedIndex.items(), key=lambda item: len(item[1]))
     print("Higher doc freq: ", [(i[0], len(i[1])) for i in mostUsed])
+
+    if args.user:
+        while True:
+            termo = input("Introduza o termo a pesquisar: ")
+            start_time = time.time()
+            termo = termo.lower()
+            if termo in indexer.invertedIndex.keys():
+                print(indexer.invertedIndex[termo])
+            else:
+                print("Termo não existente")
+                print("Keys parecidas: " , [key for key in indexer.invertedIndex.keys() if termo in key and len(termo) > 0])
+            print("---Pesquisa feita em %s seconds ---" % (time.time() - start_time))
