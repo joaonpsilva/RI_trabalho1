@@ -4,7 +4,7 @@ import pandas as pd
 
 class CorpusReader():
 
-    def __init__(self, csvfile, chunkSize=100):
+    def __init__(self, csvfile, chunkSize=10000):
         self.fileIterator = pd.read_csv(csvfile, chunksize=chunkSize, iterator=True)
 
     def getNextChunk(self):
