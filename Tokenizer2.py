@@ -8,7 +8,7 @@ class Tokenizer2:
         self.stemmer = Stemmer.Stemmer("english")
         self.stopwords = self.buildStopWords(stopwordsfile)
         self.specialCases = ["@", "-"]  # Caracters to be specially processed
-        self.regex = re.compile('[^a-zA-Z0-9@\'-]')
+        self.regex = re.compile('[^a-zA-Z0-9@\.\' -]')
 
     def buildStopWords(self, file):
         reader = open(file, 'r')
@@ -24,15 +24,13 @@ class Tokenizer2:
         terms = []
 
         for phrase in phrases:
-            a = phrase
-            phrase = self.regex.sub(' ', phrase)
+            phrase = self.regex.sub('', phrase)
             phrase = phrase.lower()
             words = phrase.split(' ')
 
-            words = [word.strip('\'-') for word in words if len(word.strip('\'-')) > 2]  # replace small words and remove apostrofes and hifens in the begining and end
+            words = [re.sub('^https*', '', word.strip('.\'-')) for word in words if len(word.strip('.\'-')) > 2]  # removes small words, https part and remove apostrofes and hifens in the begining and end
             words = self.stemmer.stemWords(words)
             words = self.removeStopWords(words)
-
 
             terms += words
 
