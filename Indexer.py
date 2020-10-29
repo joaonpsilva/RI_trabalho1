@@ -55,10 +55,11 @@ class Indexer():
                 for word in tokens:  #Iterate over token of documents
 
                     if word not in self.invertedIndex:
-                        self.invertedIndex[word] = [self.docID]
+                        self.invertedIndex[word] = [1, [self.docID]]
                     else:
-                        if self.docID != self.invertedIndex[word][-1]:  #check if word did not happen previously in same doc.
-                            self.invertedIndex[word].append(self.docID)
+                        if self.docID != self.invertedIndex[word][1][-1]:  #check if word did not happen previously in same doc.
+                            self.invertedIndex[word][1].append(self.docID)
+                            self.invertedIndex[word][0] += 1
                 
                 self.docID+=1
             
@@ -98,8 +99,8 @@ if __name__ == "__main__":
     keyList = list(indexer.invertedIndex.keys())
     print('Vocabulary size: ', len(keyList))
 
-    lessUsed = heapq.nsmallest(10, indexer.invertedIndex.items(), key=lambda item: (item[0], len(item[1])))
+    lessUsed = heapq.nsmallest(10, indexer.invertedIndex.items(), key=lambda item: (item[0], item[1][0]))
     print("First 10 terms with 1 doc freq: ", [i[0] for i in lessUsed])
     
-    mostUsed = heapq.nlargest(10, indexer.invertedIndex.items(), key=lambda item: len(item[1]))
-    print("Higher doc freq: ", [(i[0], len(i[1])) for i in mostUsed])
+    mostUsed = heapq.nlargest(10, indexer.invertedIndex.items(), key=lambda item: item[1][0])
+    print("Higher doc freq: ", [(i[0], i[1][0]) for i in mostUsed])
