@@ -1,0 +1,21 @@
+TOKENIZER 1:
+
+$python3 Indexer.py -tokenizer 1
+
+seconds:  4.481734275817871
+Total memory used by program:  130191360 bytes (124.16 Mb)
+Vocabulary size:  61050
+First 10 terms with 1 doc freq:  ['aaa', 'aaaaaag', 'aaaauga', 'aaac', 'aaag', 'aaap', 'aaars', 'aaas', 'aabb', 'aac']
+Higher doc freq terms:  [('the', 26665), ('and', 26576), ('for', 21538), ('with', 21447), ('that', 20276), ('this', 16600), ('from', 15442), ('was', 14470), ('are', 14090), ('were', 13807)]
+
+
+
+TOKENIZER 2:
+
+$python3 Indexer.py -tokenizer 2
+
+seconds:  5.530107498168945
+Total memory used by program:  139661312 bytes (133.19 Mb)
+Vocabulary size:  110520
+First 10 terms with 1 doc freq:  ['0-1', '0-10', '0-131', '0-14', '0-15.3', '0-18.4', '0-182', '0-2', '0-24', '0-2i']
+Higher doc freq terms:  [('virus', 14277), ('infect', 13647), ('use', 13591), ('studi', 12683), ('result', 12189), ('diseas', 9644), ('viral', 9336), ('cell', 9168), ('human', 8433), ('protein', 8001)]
