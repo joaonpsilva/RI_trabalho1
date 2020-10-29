@@ -1,11 +1,11 @@
-import csv
-import pandas as pd
+from pandas import read_csv
+
 
 
 class CorpusReader():
 
     def __init__(self, csvfile, chunkSize=10000):
-        self.fileIterator = pd.read_csv(csvfile, chunksize=chunkSize, iterator=True)
+        self.fileIterator = read_csv(csvfile, chunksize=chunkSize, iterator=True)
 
     def getNextChunk(self):
         try:
