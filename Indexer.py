@@ -1,7 +1,6 @@
 from Corpus import CorpusReader
 from Tokenizer1 import Tokenizer1
 from Tokenizer2 import Tokenizer2
-from Posting import Posting
 import time
 import heapq
 import argparse
@@ -32,17 +31,17 @@ class Indexer():
 
             for document in data:   #Iterate over Chunk of documents
                 doi, title, abstract = document[0], document[1], document[2]
-                self.idMap[self.docID] = doi
+                self.idMap[self.docID] = doi    #map ordinal id used in index to real id
 
                 tokens = self.tokenizer.process(title, abstract)
 
                 for word in tokens:  #Iterate over token of documents
 
                     if word not in self.invertedIndex:
-                        self.invertedIndex[word] = [Posting(self.docID)]
+                        self.invertedIndex[word] = [self.docID]
                     else:
-                        if self.docID != self.invertedIndex[word][-1].documentId:
-                            self.invertedIndex[word].append(Posting(self.docID))
+                        if self.docID != self.invertedIndex[word][-1]:
+                            self.invertedIndex[word].append(self.docID)
                 
                 self.docID+=1
 
@@ -58,10 +57,12 @@ if __name__ == "__main__":
     if args.tokenizer == 1:
         tokenizer = Tokenizer1()
     else:
-        tokenizer = Tokenizer2('snowball_stopwords_EN.txt')
+        tokenizer = Tokenizer2()
 
+    #CREATE INDEXER
     indexer = Indexer(corpusreader, tokenizer)
     
+    #GET RESULTS
     t1 = time.time()
     indexer.index()
     t2 = time.time()
