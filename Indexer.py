@@ -6,6 +6,7 @@ import heapq
 import argparse
 import os
 import psutil
+import pickle
 
 process = psutil.Process(os.getpid())
 
@@ -16,18 +17,34 @@ class Indexer():
         self.idMap = {}
         self.invertedIndex = {}
         self.docID = 1
+        self.idMapFile = "idMapFile.pickle"
+
+        with open(self.idMapFile, 'wb') as f:   #Init or clean file
+            pickle.dump({}, f)
     
     def hasEnoughMemory(self):
         return True
+    
+    def idMapToDisk(self):
+        with open(self.idMapFile, 'rb') as f:
+            content = pickle.load(f)
+        
+        content.update(self.idMap)
+
+        with open(self.idMapFile, 'wb') as f:
+            pickle.dump(content, f)
+        
+        self.idMap = {}
 
     def index(self):
 
+        count=0
         while self.hasEnoughMemory():
 
             data = self.corpusreader.getNextChunk()
             if data is None:
                 print("Finished")
-                return
+                break
 
             for document in data:   #Iterate over Chunk of documents
                 doi, title, abstract = document[0], document[1], document[2]
@@ -40,10 +57,18 @@ class Indexer():
                     if word not in self.invertedIndex:
                         self.invertedIndex[word] = [self.docID]
                     else:
-                        if self.docID != self.invertedIndex[word][-1]:
+                        if self.docID != self.invertedIndex[word][-1]:  #check if word did not happen previously in same doc.
                             self.invertedIndex[word].append(self.docID)
                 
                 self.docID+=1
+            
+            count += self.docID #Write id map tp disk
+            if count >= 10000:
+                self.idMapToDisk()
+                count=0
+        
+        self.idMapToDisk()  #id map not needed, free memory
+
 
 
 if __name__ == "__main__":
@@ -68,7 +93,7 @@ if __name__ == "__main__":
     t2 = time.time()
 
     print('seconds: ', t2-t1)
-    print("Total memory used by programm: ", process.memory_info().rss)
+    print("Total memory used by program: ", process.memory_info().rss)
     
     keyList = list(indexer.invertedIndex.keys())
     print('Vocabulary size: ', len(keyList))
